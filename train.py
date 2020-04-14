@@ -127,14 +127,11 @@ def train(args):
     year_month_date = today.split('-')
     date_to_save = year_month_date[0][2:] + year_month_date[1] + year_month_date[2]
     # ------------------------------------------------------------------------------
-    # a root path to retrieve data and save training log
-    # MACHINE is just an id marks on which server this program is running
-    from config import ROOT_DIR, MACHINE
-    save_dir = ROOT_DIR + '/%s_results_reducedofficehome' % date_to_save
+    save_dir = args.save_dir + '/%s_results_reducedofficehome' % date_to_save
     # root directory in which OfficeHomeDataset_10072016 is placed in
-    dataset_root = ROOT_DIR + '/datasets'
+    dataset_root = args.data_dir
     # use pytorch official ImageNet pre-trained model
-    resnet_model_dir = ROOT_DIR + '/resnet50-19c8e357.pth'
+    resnet_model_dir = args.resnet_model_dir+ '/resnet50-19c8e357.pth'
     # ------------------------------------------------------------------------------
 
     init_rate = args.lr  # 0.001
@@ -150,7 +147,7 @@ def train(args):
     tgt_keep = args.tgt_keep
 
     exp_name = 'norm_alea_tgtkeep%.1f_' % (tgt_keep) + source[0] + '2' + target[0]
-    save_log_file = save_dir + '/train_%s_%s.txt' % (exp_name, MACHINE)
+    save_log_file = save_dir + '/train_%s.txt' % (exp_name)
     os.makedirs(save_dir) if not os.path.exists(save_dir) else None
     img_resize, img_size = 256, 224
     mean, std = [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
@@ -214,8 +211,10 @@ def train(args):
     time_now = str(datetime.time(datetime.now()))[:8]
     log_with_print(log_writer, 'Start time: %s (Date: %s)' % (time_now, date_to_save))
     log_with_print(log_writer, '***************************')
-    log_with_print(log_writer, 'Exp: %s (on %s gpu%s)' % (exp_name, MACHINE, args.device))
+    log_with_print(log_writer, 'Exp: %s (on gpu%s)' % (exp_name, args.device))
     log_with_print(log_writer, '***************************')
+    log_with_print(log_writer, 'Data directory: %s' % dataset_root)
+    log_with_print(log_writer, 'Save directory: %s' % save_dir)
     log_with_print(log_writer, 'learning rate G: %f' % init_rate)
     log_with_print(log_writer, 'learning rate F: %f' % (init_rate*cls_lr))
     log_with_print(log_writer, 'Weight of L2Norm: %f' % w_l2)
@@ -283,7 +282,7 @@ def train(args):
             netG.cuda()
             netF.cuda()
         time_taken = (time.time() - start) / 60.0
-        log_with_print(log_writer, 'epoch%02d: l_ce:%f l_norm:%.2f l_s_kl:%f l_t_kl:%f s_sigma:%.2f t_sigma:%.2f test_acc:%.2f/%.2f in %.1fmin' % (
+        log_with_print(log_writer, 'epoch%02d: l_ce:%f l_norm:%.2f l_s_kl:%f l_t_kl:%f s_sigma:%.4f t_sigma:%.4f test_acc:%.2f/%.2f in %.1fmin' % (
             epoch, l_ce_val, l_norm_val, l_s_kl_val, l_t_kl_val, src_sigma, tgt_sigma, acc_ep, best_acc, time_taken))
         log_writer.flush()
     time_taken = (time.time() - start) / 3600.0
@@ -304,6 +303,9 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='OfficeHome DA')
     parser.add_argument('--device', type=str, default='0', metavar='TS', help='Domain ID')
+    parser.add_argument('--data_dir', type=str, default='/home/jian/datasets', metavar='TS', help='Domain ID')
+    parser.add_argument('--save_dir', type=str, default='/home/jian/results', metavar='TS', help='Domain ID')
+    parser.add_argument('--resnet_model_dir', type=str, default='/home/jian/models', metavar='TS', help='Domain ID')
     parser.add_argument('--lr', type=float, default=0.001, metavar='LR', help='Domain ID')
     parser.add_argument('--num_epoch', type=int, default=60, metavar='NE', help='Domain ID')
     parser.add_argument('--batch_size', type=int, default=32, metavar='BS', help='Domain ID')
